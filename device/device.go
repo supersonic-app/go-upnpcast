@@ -7,11 +7,13 @@ import (
 	"log"
 
 	"github.com/dweymouth/go-upnpcast/services"
+	"github.com/dweymouth/go-upnpcast/services/avtransport"
 	"github.com/koron/go-ssdp"
 )
 
 var (
-	ErrNoDeviceAvailable = errors.New("no available Media Renderers")
+	ErrNoDeviceAvailable  = errors.New("no available Media Renderers")
+	ErrUnsupportedService = errors.New("the device does not support the requested service")
 )
 
 // MediaRenderer represents a Digital Media Renderer (DMR) device discovered on the LAN
@@ -57,6 +59,27 @@ func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...
 	}
 
 	return nil, ErrNoDeviceAvailable
+}
+
+// SupportsService returns true if the MediaRenderer supports the given service type
+func (m *MediaRenderer) SupportsService(serviceType services.ServiceType) bool {
+	switch serviceType {
+	case services.AVTransport:
+		return m.avTransportControlURL != "" && m.avTransportEventSubURL != ""
+	case services.ConnectionManager:
+		return m.connectionManagerURL != ""
+	case services.RenderingControl:
+		return m.renderingControlURL != ""
+	}
+	return false
+}
+
+// AVTransportClient returns a new client to the device's AVTransport service.
+func (m *MediaRenderer) AVTransportClient() (*avtransport.Client, error) {
+	if !m.SupportsService(services.AVTransport) {
+		return nil, ErrUnsupportedService
+	}
+	return avtransport.NewClient(m.avTransportControlURL, m.avTransportEventSubURL), nil
 }
 
 // Gets the list of DMR schema URLs for all found devices that support the AVTransport service
