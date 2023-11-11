@@ -8,6 +8,7 @@ import (
 
 	"github.com/dweymouth/go-upnpcast/services"
 	"github.com/dweymouth/go-upnpcast/services/avtransport"
+	"github.com/dweymouth/go-upnpcast/services/renderingcontrol"
 	"github.com/koron/go-ssdp"
 )
 
@@ -80,6 +81,14 @@ func (m *MediaRenderer) AVTransportClient() (*avtransport.Client, error) {
 		return nil, ErrUnsupportedService
 	}
 	return avtransport.NewClient(m.avTransportControlURL, m.avTransportEventSubURL), nil
+}
+
+// RenderingControlClient returns a new client to the device's RenderingControl service.
+func (m *MediaRenderer) RenderingControlClient() (*renderingcontrol.Client, error) {
+	if !m.SupportsService(services.RenderingControl) {
+		return nil, ErrUnsupportedService
+	}
+	return renderingcontrol.NewClient(m.renderingControlURL), nil
 }
 
 // Gets the list of DMR schema URLs for all found devices that support the AVTransport service
