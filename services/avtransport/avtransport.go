@@ -16,6 +16,18 @@ type Client struct {
 	controlURL string
 }
 
+// MediaItem represents a media item to be rendered by the device.
+type MediaItem struct {
+	// URL of the media item. Required.
+	URL string
+
+	SubtitlesURL string
+	Title        string
+	ContentType  string
+	Seekable     bool
+	Duration     time.Duration
+}
+
 // Should not be used directly. Use device.AVTransportClient() instead.
 func NewClient(controlURL, eventSubURL string) *Client {
 	return &Client{
