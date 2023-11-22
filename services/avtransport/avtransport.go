@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/dweymouth/go-upnpcast/internal/utils"
 )
 
 type Client struct {
@@ -46,6 +48,76 @@ func (a *Client) Pause(ctx context.Context) error {
 
 func (a *Client) Stop(ctx context.Context) error {
 	return a.playPauseStopSoapCall(ctx, "Stop")
+}
+
+func (a *Client) Seek(ctx context.Context, relSecs int) error {
+	time, err := utils.SecondsToClockTime(relSecs)
+	if err != nil {
+		return err
+	}
+	xml, err := seekSoapBuild(time)
+	if err != nil {
+		return fmt.Errorf("SeekSoapCall action error: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xml))
+	if err != nil {
+		return fmt.Errorf("SeekSoapCall POST error: %w", err)
+	}
+
+	req.Header = http.Header{
+		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:AVTransport:1#Seek"`},
+		"content-type": []string{"text/xml"},
+		"charset":      []string{"utf-8"},
+		"Connection":   []string{"close"},
+	}
+
+	res, err := a.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("SeekSoapCall Do POST error: %w", err)
+	}
+	defer res.Body.Close()
+
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("SeekSoapCall Failed to read response: %w", err)
+	}
+	_, err = json.Marshal(res.Header)
+	if err != nil {
+		return fmt.Errorf("SeekSoapCall Response Marshaling error: %w", err)
+	}
+
+	return nil
+
+}
+
+func (a *Client) SetAVTransportMedia(ctx context.Context, media *MediaItem) error {
+	xml, err := setAVTransportSoapBuild(media)
+	if err != nil {
+		return fmt.Errorf("SetAVTransportMedia build error: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xml))
+	if err != nil {
+		return fmt.Errorf("setAVTransportSoapCall POST error: %w", err)
+	}
+	req.Header = http.Header{
+		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:AVTransport:1#SetAVTransportURI"`},
+		"content-type": []string{"text/xml"},
+		"charset":      []string{"utf-8"},
+		"Connection":   []string{"close"},
+	}
+	res, err := a.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("setAVTransportSoapCall Do POST error: %w", err)
+	}
+	defer res.Body.Close()
+
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("setAVTransportSoapCall Failed to read response: %w", err)
+	}
+
+	return nil
 }
 
 type TransportInfo struct {
