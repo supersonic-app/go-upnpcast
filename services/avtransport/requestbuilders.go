@@ -231,7 +231,7 @@ type getPositionInfoAction struct {
 	InstanceID  string
 }
 
-func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
+func buildURIMetadataPayload(media *MediaItem) ([]byte, error) {
 	mediaTypeSlice := strings.Split(media.ContentType, "/")
 	seekflag := "00"
 	if media.Seekable {
@@ -240,7 +240,7 @@ func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 
 	contentFeatures, err := utils.BuildContentFeatures(media.ContentType, seekflag, false /*transcode*/)
 	if err != nil {
-		return nil, fmt.Errorf("setAVTransportSoapBuild failed to build contentFeatures: %w", err)
+		return nil, fmt.Errorf("buildURIMetadataPayload failed to build contentFeatures: %w", err)
 	}
 
 	var class string
@@ -329,9 +329,16 @@ func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 
 	a, err := xml.Marshal(l)
 	if err != nil {
-		return nil, fmt.Errorf("setAVTransportSoapBuild #1 Marshal error: %w", err)
+		return nil, fmt.Errorf("buildURIMetadataPayload #1 Marshal error: %w", err)
 	}
+	return a, nil
+}
 
+func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
+	meta, err := buildURIMetadataPayload(media)
+	if err != nil {
+		return nil, err
+	}
 	d := setAVTransportEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -345,7 +352,7 @@ func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 				CurrentURI:  media.URL,
 				CurrentURIMetaData: currentURIMetaData{
 					XMLName: xml.Name{},
-					Value:   a,
+					Value:   meta,
 				},
 			},
 		},
@@ -363,117 +370,10 @@ func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 	return append(xmlStart, b...), nil
 }
 
-/*
-func setNextAVTransportSoapBuild(tvdata *TVPayload, clear bool) ([]byte, error) {
-	mediaTypeSlice := strings.Split(tvdata.MediaType, "/")
-	seekflag := "00"
-	if tvdata.Seekable {
-		seekflag = "01"
-	}
-
-	contentFeatures, err := utils.BuildContentFeatures(tvdata.MediaType, seekflag, tvdata.Transcode)
+func setNextAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
+	meta, err := buildURIMetadataPayload(media)
 	if err != nil {
-		return nil, fmt.Errorf("setNextAVTransportSoapBuild failed to build contentFeatures: %w", err)
-	}
-
-	var class string
-	switch mediaTypeSlice[0] {
-	case "audio":
-		class = "object.item.audioItem.musicTrack"
-	case "image":
-		class = "object.item.imageItem.photo"
-	default:
-		class = "object.item.videoItem.movie"
-	}
-
-	murl := tvdata.MediaURL
-	if clear {
-		murl = ""
-	}
-
-	mediaTitlefromURL, err := url.Parse(murl)
-	if err != nil {
-		return nil, fmt.Errorf("setNextAVTransportSoapBuild url parse error: %w", err)
-	}
-
-	mediaTitle := strings.TrimLeft(mediaTitlefromURL.Path, "/")
-
-	re, err := regexp.Compile(`[&<>\\]+`)
-	if err != nil {
-		return nil, fmt.Errorf("setNextAVTransportSoapBuild regex compile error: %w", err)
-	}
-	mediaTitle = re.ReplaceAllString(mediaTitle, "")
-
-	var didl didLLiteItem
-	resNodeData := []resNode{}
-	duration, _ := utils.DurationForMedia(tvdata.MediaPath)
-
-	switch duration {
-	case "":
-		resNodeData = append(resNodeData, resNode{
-			XMLName:      xml.Name{},
-			ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", tvdata.MediaType, contentFeatures),
-			Value:        murl,
-		})
-	default:
-		resNodeData = append(resNodeData, resNode{
-			XMLName:      xml.Name{},
-			Duration:     duration,
-			ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", tvdata.MediaType, contentFeatures),
-			Value:        murl,
-		})
-	}
-
-	didl = didLLiteItem{
-		XMLName:    xml.Name{},
-		ID:         "1",
-		ParentID:   "0",
-		Restricted: "1",
-		UPNPClass:  class,
-		DCtitle:    mediaTitle,
-		ResNode:    resNodeData,
-	}
-
-	if strings.Contains(tvdata.SubtitlesURL, "srt") {
-		resNodeData = append(resNodeData, resNode{
-			XMLName:      xml.Name{},
-			ProtocolInfo: "http-get:*:text/srt:*",
-			Value:        tvdata.SubtitlesURL,
-		})
-
-		didl = didLLiteItem{
-			XMLName:    xml.Name{},
-			ID:         "1",
-			ParentID:   "0",
-			Restricted: "1",
-			DCtitle:    mediaTitle,
-			UPNPClass:  class,
-			ResNode:    resNodeData,
-			SecCaptionInfo: &secCaptionInfo{
-				XMLName: xml.Name{},
-				Type:    "srt",
-				Value:   tvdata.SubtitlesURL,
-			},
-			SecCaptionInfoEx: &secCaptionInfoEx{
-				XMLName: xml.Name{},
-				Type:    "srt",
-				Value:   tvdata.SubtitlesURL,
-			},
-		}
-	}
-
-	l := didLLite{
-		XMLName:      xml.Name{},
-		SchemaDIDL:   "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/",
-		DC:           "http://purl.org/dc/elements/1.1/",
-		Sec:          "http://www.sec.co.kr/",
-		SchemaUPNP:   "urn:schemas-upnp-org:metadata-1-0/upnp/",
-		DIDLLiteItem: didl,
-	}
-
-	a, err := xml.Marshal(l)
-	if err != nil {
-		return nil, fmt.Errorf("setNextAVTransportSoapBuild #1 Marshal error: %w", err)
+		return nil, err
 	}
 
 	d := setNextAVTransportEnvelope{
@@ -486,10 +386,10 @@ func setNextAVTransportSoapBuild(tvdata *TVPayload, clear bool) ([]byte, error) 
 				XMLName:     xml.Name{},
 				AVTransport: "urn:schemas-upnp-org:service:AVTransport:1",
 				InstanceID:  "0",
-				NextURI:     murl,
+				NextURI:     media.URL,
 				NextURIMetaData: nextURIMetaData{
 					XMLName: xml.Name{},
-					Value:   a,
+					Value:   meta,
 				},
 			},
 		},
@@ -506,7 +406,6 @@ func setNextAVTransportSoapBuild(tvdata *TVPayload, clear bool) ([]byte, error) 
 
 	return append(xmlStart, b...), nil
 }
-*/
 
 func playSoapBuild() ([]byte, error) {
 	d := playEnvelope{
