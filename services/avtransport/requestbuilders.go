@@ -276,13 +276,17 @@ func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 		})
 	}
 
+	var title bytes.Buffer
+	if err := xml.EscapeText(&title, []byte(media.Title)); err != nil {
+		title.Reset()
+	}
 	didl = didLLiteItem{
 		XMLName:    xml.Name{},
 		ID:         "1",
 		ParentID:   "0",
 		Restricted: "1",
 		UPNPClass:  class,
-		DCtitle:    media.Title,
+		DCtitle:    title.String(),
 		ResNode:    resNodeData,
 	}
 
