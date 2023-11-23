@@ -64,13 +64,7 @@ func (a *Client) Seek(ctx context.Context, relSecs int) error {
 	if err != nil {
 		return fmt.Errorf("SeekSoapCall POST error: %w", err)
 	}
-
-	req.Header = http.Header{
-		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:AVTransport:1#Seek"`},
-		"content-type": []string{"text/xml"},
-		"charset":      []string{"utf-8"},
-		"Connection":   []string{"close"},
-	}
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#Seek"`)
 
 	res, err := a.HTTPClient.Do(req)
 	if err != nil {
@@ -100,12 +94,7 @@ func (a *Client) SetAVTransportMedia(ctx context.Context, media *MediaItem) erro
 	if err != nil {
 		return fmt.Errorf("setAVTransportSoapCall POST error: %w", err)
 	}
-	req.Header = http.Header{
-		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:AVTransport:1#SetAVTransportURI"`},
-		"content-type": []string{"text/xml"},
-		"charset":      []string{"utf-8"},
-		"Connection":   []string{"close"},
-	}
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#SetAVTransportURI"`)
 	res, err := a.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("setAVTransportSoapCall Do POST error: %w", err)
@@ -137,12 +126,7 @@ func (a *Client) GetTransportInfo(ctx context.Context) (TransportInfo, error) {
 	if err != nil {
 		return TransportInfo{}, fmt.Errorf("GetTransportInfo POST error: %w", err)
 	}
-	req.Header = http.Header{
-		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:AVTransport:1#GetTransportInfo"`},
-		"content-type": []string{"text/xml"},
-		"charset":      []string{"utf-8"},
-		"Connection":   []string{"close"},
-	}
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#GetTransportInfo"`)
 
 	res, err := a.HTTPClient.Do(req)
 	if err != nil {
@@ -192,12 +176,7 @@ func (a *Client) playPauseStopSoapCall(ctx context.Context, action string) error
 		return fmt.Errorf("AVTransportActionSoapCall POST error: %w", err)
 	}
 
-	req.Header = http.Header{
-		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:AVTransport:1#` + action + `"`},
-		"content-type": []string{"text/xml"},
-		"charset":      []string{"utf-8"},
-		"Connection":   []string{"close"},
-	}
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#` + action + `"`)
 
 	res, err := a.HTTPClient.Do(req)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -55,6 +56,15 @@ func defaultStreamingFlags() string {
 		dlnaOrgFlagDlnaV15, 0)
 }
 
+func BuildRequestHeader(soapAction string) http.Header {
+	return http.Header{
+		"SOAPAction":   []string{soapAction},
+		"content-type": []string{"text/xml"},
+		"charset":      []string{"utf-8"},
+		"Connection":   []string{"close"},
+	}
+}
+
 // BuildContentFeatures builds the content features string
 // for the "contentFeatures.dlna.org" header.
 func BuildContentFeatures(mediaType string, seek string, transcode bool) (string, error) {
@@ -97,8 +107,8 @@ func BuildContentFeatures(mediaType string, seek string, transcode bool) (string
 	return cf.String(), nil
 }
 
-// GetMimeDetailsFromFile returns the media file mime details.
-func GetMimeDetailsFromFile(f io.ReadCloser) (string, error) {
+// GetMimeDetails returns the media mime details.
+func GetMimeDetails(f io.ReadCloser) (string, error) {
 	defer f.Close()
 	head := make([]byte, 261)
 	_, err := f.Read(head)
@@ -109,23 +119,6 @@ func GetMimeDetailsFromFile(f io.ReadCloser) (string, error) {
 	kind, err := filetype.Match(head)
 	if err != nil {
 		return "", fmt.Errorf("getMimeDetailsFromFile error #3: %w", err)
-	}
-
-	return fmt.Sprintf("%s/%s", kind.MIME.Type, kind.MIME.Subtype), nil
-}
-
-// GetMimeDetailsFromStream returns the media URL mime details.
-func GetMimeDetailsFromStream(s io.ReadCloser) (string, error) {
-	defer s.Close()
-	head := make([]byte, 261)
-	_, err := s.Read(head)
-	if err != nil {
-		return "", fmt.Errorf("getMimeDetailsFromStream error: %w", err)
-	}
-
-	kind, err := filetype.Match(head)
-	if err != nil {
-		return "", fmt.Errorf("getMimeDetailsFromStream error  #2: %w", err)
 	}
 
 	return fmt.Sprintf("%s/%s", kind.MIME.Type, kind.MIME.Subtype), nil

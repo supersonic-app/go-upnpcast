@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/dweymouth/go-upnpcast/internal/utils"
 )
 
 // Client is a client to the device's RenderingControl service
@@ -73,12 +75,7 @@ func (c *Client) GetVolume(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("GetVolumeSoapCall POST error: %w", err)
 	}
 
-	req.Header = http.Header{
-		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:RenderingControl:1#GetVolume"`},
-		"content-type": []string{"text/xml"},
-		"charset":      []string{"utf-8"},
-		"Connection":   []string{"close"},
-	}
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#GetVolume"`)
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -119,12 +116,7 @@ func (c *Client) SetMute(ctx context.Context, muted bool) error {
 		return fmt.Errorf("SetMuteSoapCall POST error: %w", err)
 	}
 
-	req.Header = http.Header{
-		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:RenderingControl:1#SetMute"`},
-		"content-type": []string{"text/xml"},
-		"charset":      []string{"utf-8"},
-		"Connection":   []string{"close"},
-	}
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#SetMute"`)
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -152,12 +144,7 @@ func (c *Client) SetVolume(ctx context.Context, vol int) error {
 		return fmt.Errorf("SetVolumeSoapCall POST error: %w", err)
 	}
 
-	req.Header = http.Header{
-		"SOAPAction":   []string{`"urn:schemas-upnp-org:service:RenderingControl:1#SetVolume"`},
-		"content-type": []string{"text/xml"},
-		"charset":      []string{"utf-8"},
-		"Connection":   []string{"close"},
-	}
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#SetVolume"`)
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
