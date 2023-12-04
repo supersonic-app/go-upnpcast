@@ -52,11 +52,8 @@ func (c *Client) GetMute(ctx context.Context) (string, error) {
 	}
 	defer res.Body.Close()
 
-	var buf bytes.Buffer
-	tresp := io.TeeReader(res.Body, &buf)
-
 	var respGetMute getMuteRespBody
-	if err = xml.NewDecoder(tresp).Decode(&respGetMute); err != nil {
+	if err = xml.NewDecoder(res.Body).Decode(&respGetMute); err != nil {
 		return "", fmt.Errorf("GetMuteSoapCall XML Decode error: %w", err)
 	}
 
@@ -83,12 +80,8 @@ func (c *Client) GetVolume(ctx context.Context) (int, error) {
 	}
 	defer res.Body.Close()
 
-	var buf bytes.Buffer
-
-	tresp := io.TeeReader(res.Body, &buf)
-
 	var respGetVolume getVolumeRespBody
-	if err = xml.NewDecoder(tresp).Decode(&respGetVolume); err != nil {
+	if err = xml.NewDecoder(res.Body).Decode(&respGetVolume); err != nil {
 		return 0, fmt.Errorf("GetVolumeSoapCall XML Decode error: %w", err)
 	}
 
