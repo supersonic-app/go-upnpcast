@@ -30,6 +30,20 @@ type MediaItem struct {
 	Duration     time.Duration
 }
 
+// TransportInfo is the information returned by GetTransportInfo
+type TransportInfo struct {
+	Status string
+	State  string
+	Speed  string
+}
+
+// PositionInfo is the duration and current playback position of the current media item,
+// returned by GetPositionInfo
+type PositionInfo struct {
+	Duration string
+	RelTime  string
+}
+
 // Should not be used directly. Use device.AVTransportClient() instead.
 func NewClient(controlURL, eventSubURL string) *Client {
 	return &Client{
@@ -109,12 +123,6 @@ func (a *Client) SetAVTransportMedia(ctx context.Context, media *MediaItem) erro
 	return nil
 }
 
-type TransportInfo struct {
-	Status string
-	State  string
-	Speed  string
-}
-
 // GetTransportInfo
 func (a *Client) GetTransportInfo(ctx context.Context) (TransportInfo, error) {
 	xmlbuilder, err := getTransportInfoSoapBuild()
@@ -153,6 +161,41 @@ func (a *Client) GetTransportInfo(ctx context.Context) (TransportInfo, error) {
 	}
 
 	return info, nil
+}
+
+func (a *Client) GetPositionInfo(ctx context.Context) (PositionInfo, error) {
+	xmlRequest, err := getPositionInfoSoapBuild()
+	if err != nil {
+		return PositionInfo{}, fmt.Errorf("GetPositionInfo build error: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xmlRequest))
+	if err != nil {
+		return PositionInfo{}, fmt.Errorf("GetPositionInfo POST error: %w", err)
+	}
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#GetPositionInfo"`)
+
+	res, err := a.HTTPClient.Do(req)
+	if err != nil {
+		return PositionInfo{}, fmt.Errorf("GetPositionInfo Do POST error: %w", err)
+	}
+	defer res.Body.Close()
+
+	resBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return PositionInfo{}, fmt.Errorf("GetPositionInfo Failed to read response: %w", err)
+	}
+
+	var respPositionInfo getPositionInfoResponse
+	if err := xml.Unmarshal(resBytes, &respPositionInfo); err != nil {
+		return PositionInfo{}, fmt.Errorf("GetPositionInfo Failed to unmarshal response: %w", err)
+	}
+
+	r := respPositionInfo.Body.GetPositionInfoResponse
+	duration := r.TrackDuration
+	reltime := r.RelTime
+
+	return PositionInfo{duration, reltime}, nil
 }
 
 func (a *Client) playPauseStopSoapCall(ctx context.Context, action string) error {
