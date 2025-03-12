@@ -7,7 +7,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/dweymouth/go-upnpcast/internal/utils"
+	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
 
 type playEnvelope struct {

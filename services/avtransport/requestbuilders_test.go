@@ -3,7 +3,7 @@ package avtransport
 import (
 	"testing"
 
-	"github.com/dweymouth/go-upnpcast/internal/utils"
+	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
 
 func TestSetAVTransportSoapBuild(t *testing.T) {

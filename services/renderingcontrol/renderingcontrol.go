@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dweymouth/go-upnpcast/internal/utils"
+	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
 
 // Client is a client to the device's RenderingControl service

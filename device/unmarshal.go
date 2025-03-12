@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/dweymouth/go-upnpcast/services"
+	"github.com/supersonic-app/go-upnpcast/services"
 )
 
 type dmrSchema struct {

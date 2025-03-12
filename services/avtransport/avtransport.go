@@ -7,10 +7,11 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/dweymouth/go-upnpcast/internal/utils"
+	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
 
 type Client struct {
@@ -115,6 +116,32 @@ func (a *Client) SetAVTransportMedia(ctx context.Context, media *MediaItem) erro
 	}
 	defer res.Body.Close()
 
+	body, err := io.ReadAll(res.Body)
+	log.Println(string(body))
+	if err != nil {
+		return fmt.Errorf("setAVTransportSoapCall Failed to read response: %w", err)
+	}
+
+	return nil
+}
+
+func (a *Client) SetNextAVTransportMedia(ctx context.Context, media *MediaItem) error {
+	xml, err := setNextAVTransportSoapBuild(media)
+	if err != nil {
+		return fmt.Errorf("SetNextAVTransportMedia build error: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xml))
+	if err != nil {
+		return fmt.Errorf("setNextAVTransportSoapCall POST error: %w", err)
+	}
+
+	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#SetNextAVTransportURI"`)
+	res, err := a.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("setAVTransportSoapCall Do POST error: %w", err)
+	}
+	defer res.Body.Close()
+
 	_, err = io.ReadAll(res.Body)
 	if err != nil {
 		return fmt.Errorf("setAVTransportSoapCall Failed to read response: %w", err)
@@ -192,10 +219,13 @@ func (a *Client) GetPositionInfo(ctx context.Context) (PositionInfo, error) {
 	}
 
 	r := respPositionInfo.Body.GetPositionInfoResponse
-	duration := r.TrackDuration
-	reltime := r.RelTime
+	_, err = time.Parse("15:04:05", r.TrackDuration)
+	_, err2 := time.Parse("15:04:05", r.RelTime)
+	if err2 != nil && err == nil {
+		err = err2
+	}
 
-	return PositionInfo{duration, reltime}, nil
+	return PositionInfo{r.TrackDuration, r.RelTime}, err
 }
 
 func (a *Client) playPauseStopSoapCall(ctx context.Context, action string) error {

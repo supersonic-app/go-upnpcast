@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/dweymouth/go-upnpcast/services"
-	"github.com/dweymouth/go-upnpcast/services/avtransport"
-	"github.com/dweymouth/go-upnpcast/services/renderingcontrol"
 	"github.com/koron/go-ssdp"
+	"github.com/supersonic-app/go-upnpcast/services"
+	"github.com/supersonic-app/go-upnpcast/services/avtransport"
+	"github.com/supersonic-app/go-upnpcast/services/renderingcontrol"
 )
 
 var (
