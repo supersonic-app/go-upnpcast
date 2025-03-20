@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/h2non/filetype"
 )
@@ -191,4 +192,43 @@ func FormatClockTime(strtime string) (string, error) {
 	}
 
 	return out, nil
+}
+
+// ParseDuration parses a HH:MM:SS or MM:SS formatted string
+// into a [time.Duration] value.
+func ParseDuration(durStr string) (time.Duration, error) {
+	parts := strings.Split(durStr, ":")
+	var hours, minutes, seconds int
+	var err error
+
+	if len(parts) == 2 {
+		// Format MM:SS
+		minutes, err = strconv.Atoi(parts[0])
+		if err != nil {
+			return 0, fmt.Errorf("invalid minutes: %w", err)
+		}
+		seconds, err = strconv.Atoi(parts[1])
+		if err != nil {
+			return 0, fmt.Errorf("invalid seconds: %w", err)
+		}
+	} else if len(parts) == 3 {
+		// Format HH:MM:SS
+		hours, err = strconv.Atoi(parts[0])
+		if err != nil {
+			return 0, fmt.Errorf("invalid hours: %w", err)
+		}
+		minutes, err = strconv.Atoi(parts[1])
+		if err != nil {
+			return 0, fmt.Errorf("invalid minutes: %w", err)
+		}
+		seconds, err = strconv.Atoi(parts[2])
+		if err != nil {
+			return 0, fmt.Errorf("invalid seconds: %w", err)
+		}
+	} else {
+		return 0, fmt.Errorf("invalid format: expected MM:SS or HH:MM:SS")
+	}
+
+	duration := time.Duration(hours)*time.Hour + time.Duration(minutes)*time.Minute + time.Duration(seconds)*time.Second
+	return duration, nil
 }

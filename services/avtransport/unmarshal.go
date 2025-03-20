@@ -40,3 +40,31 @@ type getTransportInfoResponse struct {
 		} `xml:"GetTransportInfoResponse"`
 	} `xml:"Body"`
 }
+
+type setAVTransportURIResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	S             string   `xml:"s,attr"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	Body          struct {
+		Text                      string `xml:",chardata"`
+		SetAVTransportURIResponse struct {
+			Text string `xml:",chardata"`
+			U    string `xml:"u,attr"`
+		} `xml:"SetAVTransportURIResponse"`
+	} `xml:"Body"`
+}
+
+type setNextAVTransportURIResponse struct {
+	XMLName       xml.Name `xml:"Envelope"`
+	Text          string   `xml:",chardata"`
+	S             string   `xml:"s,attr"`
+	EncodingStyle string   `xml:"encodingStyle,attr"`
+	Body          struct {
+		Text                      string `xml:",chardata"`
+		SetAVTransportURIResponse struct {
+			Text string `xml:",chardata"`
+			U    string `xml:"u,attr"`
+		} `xml:"SetNextAVTransportURIResponse"`
+	} `xml:"Body"`
+}

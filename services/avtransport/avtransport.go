@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
@@ -41,8 +40,8 @@ type TransportInfo struct {
 // PositionInfo is the duration and current playback position of the current media item,
 // returned by GetPositionInfo
 type PositionInfo struct {
-	Duration string
-	RelTime  string
+	Duration time.Duration
+	RelTime  time.Duration
 }
 
 // Should not be used directly. Use device.AVTransportClient() instead.
@@ -101,50 +100,59 @@ func (a *Client) Seek(ctx context.Context, relSecs int) error {
 }
 
 func (a *Client) SetAVTransportMedia(ctx context.Context, media *MediaItem) error {
-	xml, err := setAVTransportSoapBuild(media)
+	soapCall, err := setAVTransportSoapBuild(media)
 	if err != nil {
 		return fmt.Errorf("SetAVTransportMedia build error: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xml))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(soapCall))
 	if err != nil {
-		return fmt.Errorf("setAVTransportSoapCall POST error: %w", err)
+		return fmt.Errorf("SetAVTransportMedia POST error: %w", err)
 	}
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#SetAVTransportURI"`)
 	res, err := a.HTTPClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("setAVTransportSoapCall Do POST error: %w", err)
+		return fmt.Errorf("SetAVTransportMedia Do POST error: %w", err)
 	}
 	defer res.Body.Close()
 
-	body, err := io.ReadAll(res.Body)
-	log.Println(string(body))
+	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return fmt.Errorf("setAVTransportSoapCall Failed to read response: %w", err)
+		return fmt.Errorf("SetAVTransportMedia Failed to read response: %w", err)
+	}
+
+	var resp setAVTransportURIResponse
+	if err := xml.Unmarshal(respBody, &resp); err != nil {
+		return fmt.Errorf("SetAVTransportMedia Failed to unmarshal response: %w", err)
 	}
 
 	return nil
 }
 
 func (a *Client) SetNextAVTransportMedia(ctx context.Context, media *MediaItem) error {
-	xml, err := setNextAVTransportSoapBuild(media)
+	soapCall, err := setNextAVTransportSoapBuild(media)
 	if err != nil {
 		return fmt.Errorf("SetNextAVTransportMedia build error: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xml))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(soapCall))
 	if err != nil {
-		return fmt.Errorf("setNextAVTransportSoapCall POST error: %w", err)
+		return fmt.Errorf("SetNextAVTransportMedia POST error: %w", err)
 	}
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#SetNextAVTransportURI"`)
 	res, err := a.HTTPClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("setAVTransportSoapCall Do POST error: %w", err)
+		return fmt.Errorf("SetNextAVTransportMedia Do POST error: %w", err)
 	}
 	defer res.Body.Close()
 
-	_, err = io.ReadAll(res.Body)
+	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return fmt.Errorf("setAVTransportSoapCall Failed to read response: %w", err)
+		return fmt.Errorf("SetNextAVTransportMedia Failed to read response: %w", err)
+	}
+
+	var resp setNextAVTransportURIResponse
+	if err := xml.Unmarshal(respBody, &resp); err != nil {
+		return fmt.Errorf("SetNextAVTransportMedia Failed to unmarshal response: %w", err)
 	}
 
 	return nil
@@ -219,13 +227,13 @@ func (a *Client) GetPositionInfo(ctx context.Context) (PositionInfo, error) {
 	}
 
 	r := respPositionInfo.Body.GetPositionInfoResponse
-	_, err = time.Parse("15:04:05", r.TrackDuration)
-	_, err2 := time.Parse("15:04:05", r.RelTime)
+	dur, err := utils.ParseDuration(r.TrackDuration)
+	rel, err2 := utils.ParseDuration(r.RelTime)
 	if err2 != nil && err == nil {
 		err = err2
 	}
 
-	return PositionInfo{r.TrackDuration, r.RelTime}, err
+	return PositionInfo{Duration: dur, RelTime: rel}, err
 }
 
 func (a *Client) playPauseStopSoapCall(ctx context.Context, action string) error {
