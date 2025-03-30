@@ -38,7 +38,7 @@ type MediaRenderer struct {
 // that implement all the service types specified in `requiredServices`
 // - waitSec is how many seconds to wait for device responses to the SSDP search
 // If passing a context with deadline/expiration, it should be longer than waitSec
-func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...services.ServiceType) ([]*MediaRenderer, error) {
+func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...services.Type) ([]*MediaRenderer, error) {
 	deviceLocations, err := getSSDPAVTransportDeviceLocations(waitSec)
 	if err != nil {
 		return nil, err
@@ -55,15 +55,15 @@ func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...
 		devices = append(devices, mr)
 	}
 
-	if len(devices) > 0 {
-		return devices, nil
+	if len(devices) == 0 {
+		return nil, ErrNoDeviceAvailable
 	}
 
-	return nil, ErrNoDeviceAvailable
+	return devices, nil
 }
 
 // SupportsService returns true if the MediaRenderer supports the given service type
-func (m *MediaRenderer) SupportsService(serviceType services.ServiceType) bool {
+func (m *MediaRenderer) SupportsService(serviceType services.Type) bool {
 	switch serviceType {
 	case services.AVTransport:
 		return m.avTransportControlURL != "" && m.avTransportEventSubURL != ""
@@ -101,7 +101,7 @@ func getSSDPAVTransportDeviceLocations(waitSec int) ([]string, error) {
 	var deviceLocations listSet
 	for _, srv := range ssdpServices {
 		// All DMRs we care about must support the AVTransport service
-		if srv.Type == string(services.AVTransport) {
+		if srv.Type == services.AVTransport {
 			deviceLocations.add(srv.Location)
 		}
 	}

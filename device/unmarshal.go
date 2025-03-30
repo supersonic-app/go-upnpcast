@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,26 +21,24 @@ type dmrSchema struct {
 		ServiceList  struct {
 			XMLName  xml.Name `xml:"serviceList"`
 			Services []struct {
-				XMLName     xml.Name `xml:"service"`
-				Type        string   `xml:"serviceType"`
-				ID          string   `xml:"serviceId"`
-				ControlURL  string   `xml:"controlURL"`
-				EventSubURL string   `xml:"eventSubURL"`
+				XMLName     xml.Name      `xml:"service"`
+				Type        services.Type `xml:"serviceType"`
+				ID          string        `xml:"serviceId"`
+				ControlURL  string        `xml:"controlURL"`
+				EventSubURL string        `xml:"eventSubURL"`
 			} `xml:"service"`
 		} `xml:"serviceList"`
 	} `xml:"device"`
 }
 
 func mediaRendererFromDeviceURL(ctx context.Context, dmrurl string) (*MediaRenderer, error) {
-	var root dmrSchema
-
 	parsedURL, err := url.Parse(dmrurl)
 	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
 		return nil, fmt.Errorf("device URL parse error: %w", err)
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequestWithContext(ctx, "GET", dmrurl, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, dmrurl, nil)
 	if err != nil {
 		return nil, fmt.Errorf("setup GET device manifest error: %w", err)
 	}
@@ -53,12 +50,8 @@ func mediaRendererFromDeviceURL(ctx context.Context, dmrurl string) (*MediaRende
 	}
 	defer xmlresp.Body.Close()
 
-	xmlbody, err := io.ReadAll(xmlresp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read device manifest error: %w", err)
-	}
-
-	err = xml.Unmarshal(xmlbody, &root)
+	var root dmrSchema
+	err = xml.NewDecoder(xmlresp.Body).Decode(&root)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal device manifest error: %w", err)
 	}
@@ -79,7 +72,7 @@ func mediaRendererFromDeviceURL(ctx context.Context, dmrurl string) (*MediaRende
 		}
 
 		switch service.Type {
-		case string(services.AVTransport):
+		case services.AVTransport:
 			mr.avTransportControlURL = parsedURL.Scheme + "://" + parsedURL.Host + service.ControlURL
 			mr.avTransportEventSubURL = parsedURL.Scheme + "://" + parsedURL.Host + service.EventSubURL
 
@@ -90,14 +83,14 @@ func mediaRendererFromDeviceURL(ctx context.Context, dmrurl string) (*MediaRende
 			if _, err = url.ParseRequestURI(mr.avTransportEventSubURL); err != nil {
 				return nil, fmt.Errorf("invalid AVTransportEventSubURL: %w", err)
 			}
-		case string(services.RenderingControl):
+		case services.RenderingControl:
 			mr.renderingControlURL = parsedURL.Scheme + "://" + parsedURL.Host + service.ControlURL
 
 			_, err = url.ParseRequestURI(mr.renderingControlURL)
 			if err != nil {
 				return nil, fmt.Errorf("invalid RenderingControlURL: %w", err)
 			}
-		case string(services.ConnectionManager):
+		case services.ConnectionManager:
 			mr.connectionManagerURL = parsedURL.Scheme + "://" + parsedURL.Host + service.ControlURL
 			if err != nil {
 				return nil, fmt.Errorf("invalid ConnectionManagerURL: %w", err)

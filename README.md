@@ -1,3 +1,4 @@
+[![Go API Reference](https://img.shields.io/badge/go-documentation-blue.svg?style=flat)](https://pkg.go.dev/github.com/supersonic-app/go-upnpcast)
 # go-upnpcast
 
 **Status**: In development. This library is not in a usable state yet.
