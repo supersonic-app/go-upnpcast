@@ -38,7 +38,7 @@ type MediaRenderer struct {
 // that implement all the service types specified in `requiredServices`
 // - waitSec is how many seconds to wait for device responses to the SSDP search
 // If passing a context with deadline/expiration, it should be longer than waitSec
-func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...services.ServiceType) ([]*MediaRenderer, error) {
+func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...services.Type) ([]*MediaRenderer, error) {
 	deviceLocations, err := getSSDPAVTransportDeviceLocations(waitSec)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...
 }
 
 // SupportsService returns true if the MediaRenderer supports the given service type
-func (m *MediaRenderer) SupportsService(serviceType services.ServiceType) bool {
+func (m *MediaRenderer) SupportsService(serviceType services.Type) bool {
 	switch serviceType {
 	case services.AVTransport:
 		return m.avTransportControlURL != "" && m.avTransportEventSubURL != ""
