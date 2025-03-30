@@ -101,7 +101,7 @@ func getSSDPAVTransportDeviceLocations(waitSec int) ([]string, error) {
 	var deviceLocations listSet
 	for _, srv := range ssdpServices {
 		// All DMRs we care about must support the AVTransport service
-		if srv.Type == string(services.AVTransport) {
+		if srv.Type == services.AVTransport {
 			deviceLocations.add(srv.Location)
 		}
 	}

@@ -1,6 +1,6 @@
 package services
 
-type Type string
+type Type = string
 
 const (
 	AVTransport       Type = "urn:schemas-upnp-org:service:AVTransport:1"
