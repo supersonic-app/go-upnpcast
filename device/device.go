@@ -13,10 +13,7 @@ import (
 	"github.com/supersonic-app/go-upnpcast/services/renderingcontrol"
 )
 
-var (
-	ErrNoDeviceAvailable  = errors.New("no available Media Renderers")
-	ErrUnsupportedService = errors.New("the device does not support the requested service")
-)
+var ErrUnsupportedService = errors.New("the device does not support the requested service")
 
 // MediaRenderer represents a Digital Media Renderer (DMR) device discovered on the LAN
 type MediaRenderer struct {
