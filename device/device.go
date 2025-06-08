@@ -1,10 +1,10 @@
 package device
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/koron/go-ssdp"
 	"github.com/supersonic-app/go-upnpcast/services"
@@ -45,17 +45,17 @@ func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...
 	}
 
 	devices := make([]*MediaRenderer, 0, len(deviceLocations))
+	errors := []error{}
 	for _, l := range deviceLocations {
 		mr, err := mediaRendererFromDeviceURL(ctx, l)
 		if err != nil {
-			// TODO: surface error to caller
-			log.Printf("skipping bad device: %v", err)
+			errors = append(errors, err)
 			continue
 		}
 		devices = append(devices, mr)
 	}
 
-	return devices, nil
+	return devices, cmp.Or(errors...)
 }
 
 // SupportsService returns true if the MediaRenderer supports the given service type
