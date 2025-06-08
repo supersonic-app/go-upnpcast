@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/koron/go-ssdp"
 	"github.com/supersonic-app/go-upnpcast/services"
@@ -107,10 +108,8 @@ func getSSDPAVTransportDeviceLocations(waitSec int) ([]string, error) {
 type listSet []string
 
 func (l *listSet) add(s string) {
-	for _, x := range *l {
-		if s == x {
-			return
-		}
+	if slices.Contains(*l, s) {
+		return
 	}
 	*l = append(*l, s)
 }
