@@ -55,10 +55,6 @@ func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...
 		devices = append(devices, mr)
 	}
 
-	if len(devices) == 0 {
-		return nil, ErrNoDeviceAvailable
-	}
-
 	return devices, nil
 }
 
