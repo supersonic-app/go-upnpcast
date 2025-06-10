@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -193,5 +195,13 @@ func ParseDuration(durStr string) (time.Duration, error) {
 
 	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return t.Sub(midnight), nil
+}
 
+func MarshalXMLWithStart(d any) (io.Reader, error) {
+	b, err := xml.Marshal(d)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling error: %w", err)
+	}
+
+	return io.MultiReader(strings.NewReader(XMLStart), bytes.NewReader(b)), nil
 }

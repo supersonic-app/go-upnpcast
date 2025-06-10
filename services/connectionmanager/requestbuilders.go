@@ -1,11 +1,8 @@
 package connectionmanager
 
 import (
-	"bytes"
 	"encoding/xml"
-	"fmt"
 	"io"
-	"strings"
 
 	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
@@ -40,10 +37,5 @@ func getProtocolInfoSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getProtocolInfoSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }

@@ -418,12 +418,7 @@ func playSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("playSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
 func stopSoapBuild() (io.Reader, error) {
@@ -441,12 +436,7 @@ func stopSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("stopSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
 func pauseSoapBuild() (io.Reader, error) {
@@ -464,13 +454,7 @@ func pauseSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("pauseSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
-
+	return utils.MarshalXMLWithStart(d)
 }
 
 func getMediaInfoSoapBuild() (io.Reader, error) {
@@ -487,12 +471,7 @@ func getMediaInfoSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getMediaInfoSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
 func getTransportInfoSoapBuild() (io.Reader, error) {
@@ -509,12 +488,7 @@ func getTransportInfoSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getTransportInfoSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
 func getPositionInfoSoapBuild() (io.Reader, error) {
@@ -531,14 +505,7 @@ func getPositionInfoSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getPositionInfoSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
-
+	return utils.MarshalXMLWithStart(d)
 }
 
 func seekSoapBuild(reltime string) (io.Reader, error) {
@@ -557,10 +524,5 @@ func seekSoapBuild(reltime string) (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("seekSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }

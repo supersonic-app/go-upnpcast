@@ -1,11 +1,8 @@
 package renderingcontrol
 
 import (
-	"bytes"
 	"encoding/xml"
-	"fmt"
 	"io"
-	"strings"
 
 	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
@@ -109,12 +106,7 @@ func setMuteSoapBuild(muted bool) (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("setMuteSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
 func getMuteSoapBuild() (io.Reader, error) {
@@ -132,12 +124,7 @@ func getMuteSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getMuteSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
 func getVolumeSoapBuild() (io.Reader, error) {
@@ -155,12 +142,7 @@ func getVolumeSoapBuild() (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getVolumeSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
 func setVolumeSoapBuild(v string) (io.Reader, error) {
@@ -179,10 +161,5 @@ func setVolumeSoapBuild(v string) (io.Reader, error) {
 			},
 		},
 	}
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("setVolumeSoapBuild Marshal error: %w", err)
-	}
-
-	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+	return utils.MarshalXMLWithStart(d)
 }
