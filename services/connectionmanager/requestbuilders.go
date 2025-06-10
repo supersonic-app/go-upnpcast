@@ -2,7 +2,9 @@ package connectionmanager
 
 import (
 	"encoding/xml"
-	"fmt"
+	"io"
+
+	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
 
 type getProtocolInfoEnvelope struct {
@@ -22,7 +24,7 @@ type getProtocolInfoAction struct {
 	ConnectionManager string   `xml:"xmlns:u,attr"`
 }
 
-func getProtocolInfoSoapBuild() ([]byte, error) {
+func getProtocolInfoSoapBuild() (io.Reader, error) {
 	d := getProtocolInfoEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -35,11 +37,5 @@ func getProtocolInfoSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getProtocolInfoSoapBuild Marshal error: %w", err)
-	}
-
-	return append(xmlStart, b...), nil
+	return utils.MarshalXMLWithStart(d)
 }
