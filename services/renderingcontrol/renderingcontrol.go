@@ -15,14 +15,14 @@ import (
 
 // Client is a client to the device's RenderingControl service
 type Client struct {
-	HTTPClient *http.Client
+	http       http.Client
 	controlURL string
 }
 
 // Should not be used directly. Use device.RenderingControlClient() instead.
 func NewClient(controlURL string) *Client {
 	return &Client{
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+		http:       http.Client{Timeout: 10 * time.Second},
 		controlURL: controlURL,
 	}
 }
@@ -46,7 +46,7 @@ func (c *Client) GetMute(ctx context.Context) (string, error) {
 		"Connection":   []string{"close"},
 	}
 
-	res, err := c.HTTPClient.Do(req)
+	res, err := c.http.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("GetMuteSoapCall Do POST error: %w", err)
 	}
@@ -74,7 +74,7 @@ func (c *Client) GetVolume(ctx context.Context) (int, error) {
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#GetVolume"`)
 
-	res, err := c.HTTPClient.Do(req)
+	res, err := c.http.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("GetVolumeSoapCall Do POST error: %w", err)
 	}
@@ -90,11 +90,7 @@ func (c *Client) GetVolume(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("GetVolumeSoapCall failed to parse volume value: %w", err)
 	}
 
-	if intVolume < 0 {
-		intVolume = 0
-	}
-
-	return intVolume, nil
+	return max(intVolume, 0), nil
 }
 
 // SetMute sets the mute status of the device
@@ -111,7 +107,7 @@ func (c *Client) SetMute(ctx context.Context, muted bool) error {
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#SetMute"`)
 
-	res, err := c.HTTPClient.Do(req)
+	res, err := c.http.Do(req)
 	if err != nil {
 		return fmt.Errorf("SetMuteSoapCall Do POST error: %w", err)
 	}
@@ -139,7 +135,7 @@ func (c *Client) SetVolume(ctx context.Context, vol int) error {
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#SetVolume"`)
 
-	res, err := c.HTTPClient.Do(req)
+	res, err := c.http.Do(req)
 	if err != nil {
 		return fmt.Errorf("SetVolumeSoapCall Do POST error: %w", err)
 	}
