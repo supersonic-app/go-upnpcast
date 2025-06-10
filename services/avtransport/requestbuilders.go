@@ -264,10 +264,7 @@ func buildURIMetadataPayload(media *MediaItem) ([]byte, error) {
 			Value:        media.URL,
 		})
 	} else {
-		duration := ""
-		if dur, err := utils.SecondsToClockTime(int(math.Round(media.Duration.Seconds()))); err == nil {
-			duration = dur
-		}
+		duration := utils.SecondsToClockTime(int(math.Round(media.Duration.Seconds())))
 		resNodeData = append(resNodeData, resNode{
 			XMLName:      xml.Name{},
 			Duration:     duration,

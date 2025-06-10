@@ -66,10 +66,7 @@ func (a *Client) Stop(ctx context.Context) error {
 }
 
 func (a *Client) Seek(ctx context.Context, relSecs int) error {
-	time, err := utils.SecondsToClockTime(relSecs)
-	if err != nil {
-		return err
-	}
+	time := utils.SecondsToClockTime(relSecs)
 	xml, err := seekSoapBuild(time)
 	if err != nil {
 		return fmt.Errorf("SeekSoapCall action error: %w", err)

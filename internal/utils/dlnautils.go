@@ -127,56 +127,38 @@ func GetMimeDetails(f io.ReadCloser) (string, error) {
 
 // ClockTimeToSeconds converts relative time to seconds.
 func ClockTimeToSeconds(strtime string) (int, error) {
-	var out int
-	v := make([]int, 0, 3)
-
 	s := strings.Split(strtime, ":")
 	if len(s) != 3 {
 		return 0, ErrInvalidClockFormat
 	}
 
-	num, err := strconv.Atoi(s[0])
+	hours, err := strconv.Atoi(s[0])
 	if err != nil {
 		return 0, ErrInvalidClockFormat
 	}
-	v = append(v, num)
 
-	num, err = strconv.Atoi(s[1])
+	minutes, err := strconv.Atoi(s[1])
 	if err != nil {
 		return 0, ErrInvalidClockFormat
 	}
-	v = append(v, num)
 
 	f, err := strconv.ParseFloat(s[2], 32)
 	if err != nil {
 		return 0, ErrInvalidClockFormat
 	}
-	f = math.Round(f)
-	v = append(v, int(f))
+	seconds := int(math.Round(f))
 
-	for n, i := range v {
-		switch n {
-		case 0:
-			out += i * 3600
-		case 1:
-			out += i * 60
-		case 2:
-			out += i
-		}
-	}
-
-	return out, nil
+	return hours*3600 + minutes*60 + seconds, nil
 }
 
 // SecondsToClockTime converts seconds to seconds relative time.
-func SecondsToClockTime(secs int) (string, error) {
+func SecondsToClockTime(secs int) string {
 	hours := secs / 3600
 	secs %= 3600
 	minutes := secs / 60
 	secs %= 60
 
-	str := fmt.Sprintf("%02d:%02d:%02d", hours, minutes, secs)
-	return str, nil
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, secs)
 }
 
 // FormatClockTime converts clock time to a more expected format of clock time.
@@ -186,49 +168,28 @@ func FormatClockTime(strtime string) (string, error) {
 		return "", ErrInvalidClockFormat
 	}
 
-	out, err := SecondsToClockTime(sec)
-	if err != nil {
-		return "", ErrInvalidClockFormat
-	}
-
-	return out, nil
+	return SecondsToClockTime(sec), nil
 }
 
 // ParseDuration parses a HH:MM:SS or MM:SS formatted string
 // into a [time.Duration] value.
 func ParseDuration(durStr string) (time.Duration, error) {
-	parts := strings.Split(durStr, ":")
-	var hours, minutes, seconds int
-	var err error
-
-	if len(parts) == 2 {
-		// Format MM:SS
-		minutes, err = strconv.Atoi(parts[0])
-		if err != nil {
-			return 0, fmt.Errorf("invalid minutes: %w", err)
-		}
-		seconds, err = strconv.Atoi(parts[1])
-		if err != nil {
-			return 0, fmt.Errorf("invalid seconds: %w", err)
-		}
-	} else if len(parts) == 3 {
-		// Format HH:MM:SS
-		hours, err = strconv.Atoi(parts[0])
-		if err != nil {
-			return 0, fmt.Errorf("invalid hours: %w", err)
-		}
-		minutes, err = strconv.Atoi(parts[1])
-		if err != nil {
-			return 0, fmt.Errorf("invalid minutes: %w", err)
-		}
-		seconds, err = strconv.Atoi(parts[2])
-		if err != nil {
-			return 0, fmt.Errorf("invalid seconds: %w", err)
-		}
-	} else {
+	timeformat := ""
+	switch strings.Count(durStr, ":") {
+	case 2:
+		timeformat = "04:05"
+	case 3:
+		timeformat = "15:04:05"
+	default:
 		return 0, fmt.Errorf("invalid format: expected MM:SS or HH:MM:SS")
 	}
 
-	duration := time.Duration(hours)*time.Hour + time.Duration(minutes)*time.Minute + time.Duration(seconds)*time.Second
-	return duration, nil
+	t, err := time.Parse(timeformat, durStr)
+	if err != nil {
+		return 0, ErrInvalidClockFormat
+	}
+
+	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	return t.Sub(midnight), nil
+
 }
