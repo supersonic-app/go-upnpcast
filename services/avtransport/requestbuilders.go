@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"math"
 	"strings"
 
@@ -331,7 +332,7 @@ func buildURIMetadataPayload(media *MediaItem) ([]byte, error) {
 	return a, nil
 }
 
-func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
+func setAVTransportSoapBuild(media *MediaItem) (io.Reader, error) {
 	meta, err := buildURIMetadataPayload(media)
 	if err != nil {
 		return nil, err
@@ -354,7 +355,6 @@ func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("setAVTransportSoapBuild #2 Marshal error: %w", err)
@@ -364,10 +364,10 @@ func setAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 	b = bytes.ReplaceAll(b, []byte("&#34;"), []byte(`"`))
 	b = bytes.ReplaceAll(b, []byte("&amp;"), []byte("&"))
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
 }
 
-func setNextAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
+func setNextAVTransportSoapBuild(media *MediaItem) (io.Reader, error) {
 	meta, err := buildURIMetadataPayload(media)
 	if err != nil {
 		return nil, err
@@ -391,7 +391,6 @@ func setNextAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("setNextAVTransportSoapBuild #2 Marshal error: %w", err)
@@ -401,10 +400,10 @@ func setNextAVTransportSoapBuild(media *MediaItem) ([]byte, error) {
 	b = bytes.ReplaceAll(b, []byte("&#34;"), []byte(`"`))
 	b = bytes.ReplaceAll(b, []byte("&amp;"), []byte("&"))
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
 }
 
-func playSoapBuild() ([]byte, error) {
+func playSoapBuild() (io.Reader, error) {
 	d := playEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -419,16 +418,15 @@ func playSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("playSoapBuild Marshal error: %w", err)
 	}
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
 }
 
-func stopSoapBuild() ([]byte, error) {
+func stopSoapBuild() (io.Reader, error) {
 	d := stopEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -443,16 +441,15 @@ func stopSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("stopSoapBuild Marshal error: %w", err)
 	}
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
 }
 
-func pauseSoapBuild() ([]byte, error) {
+func pauseSoapBuild() (io.Reader, error) {
 	d := pauseEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -467,16 +464,16 @@ func pauseSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("pauseSoapBuild Marshal error: %w", err)
 	}
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+
 }
 
-func getMediaInfoSoapBuild() ([]byte, error) {
+func getMediaInfoSoapBuild() (io.Reader, error) {
 	d := getMediaInfoEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -490,16 +487,15 @@ func getMediaInfoSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("getMediaInfoSoapBuild Marshal error: %w", err)
 	}
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
 }
 
-func getTransportInfoSoapBuild() ([]byte, error) {
+func getTransportInfoSoapBuild() (io.Reader, error) {
 	d := getTransportInfoEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -513,16 +509,15 @@ func getTransportInfoSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("getTransportInfoSoapBuild Marshal error: %w", err)
 	}
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
 }
 
-func getPositionInfoSoapBuild() ([]byte, error) {
+func getPositionInfoSoapBuild() (io.Reader, error) {
 	d := getPositionInfoEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -536,16 +531,17 @@ func getPositionInfoSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
+
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("getPositionInfoSoapBuild Marshal error: %w", err)
 	}
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
+
 }
 
-func seekSoapBuild(reltime string) ([]byte, error) {
+func seekSoapBuild(reltime string) (io.Reader, error) {
 	d := seekEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -561,11 +557,10 @@ func seekSoapBuild(reltime string) ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
 	b, err := xml.Marshal(d)
 	if err != nil {
 		return nil, fmt.Errorf("seekSoapBuild Marshal error: %w", err)
 	}
 
-	return append(xmlStart, b...), nil
+	return io.MultiReader(strings.NewReader(utils.XMLStart), bytes.NewReader(b)), nil
 }

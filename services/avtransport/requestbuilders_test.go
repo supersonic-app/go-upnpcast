@@ -1,6 +1,8 @@
 package avtransport
 
 import (
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/supersonic-app/go-upnpcast/internal/utils"
@@ -42,7 +44,7 @@ func TestSetAVTransportSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call setAVTransportSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != want {
+			if readerToString(out) != want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, want)
 			}
 		})
@@ -85,7 +87,7 @@ func TestSetNextAVTransportSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call setNextAVTransportSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != want {
+			if readerToString(out) != want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, want)
 			}
 		})
@@ -109,7 +111,7 @@ func TestPlaySoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call playSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
@@ -133,7 +135,7 @@ func TestStopSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call stopSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
@@ -157,7 +159,7 @@ func TestPauseSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call pauseSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
@@ -181,7 +183,7 @@ func TestGetTransportInfoSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call getTransportInfoSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
@@ -205,7 +207,7 @@ func TestGetPositionInfoSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call getPositionInfoSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
@@ -231,9 +233,15 @@ func TestSeekSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call seekSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
 	}
+}
+
+func readerToString(r io.Reader) string {
+	var buf strings.Builder
+	io.Copy(&buf, r)
+	return buf.String()
 }

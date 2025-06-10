@@ -13,6 +13,8 @@ import (
 	"github.com/h2non/filetype"
 )
 
+const XMLStart = `<?xml version="1.0" encoding="utf-8"?>`
+
 const (
 	// dlnaOrgFlagSenderPaced = 1 << 31
 	// dlnaOrgFlagTimeBasedSeek = 1 << 30

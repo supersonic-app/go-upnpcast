@@ -1,7 +1,6 @@
 package renderingcontrol
 
 import (
-	"bytes"
 	"context"
 	"encoding/xml"
 	"fmt"
@@ -34,7 +33,7 @@ func (c *Client) GetMute(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("GetMuteSoapCall build error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", c.controlURL, bytes.NewReader(xmlbuilder))
+	req, err := http.NewRequestWithContext(ctx, "POST", c.controlURL, xmlbuilder)
 	if err != nil {
 		return "", fmt.Errorf("GetMuteSoapCall POST error: %w", err)
 	}
@@ -67,7 +66,7 @@ func (c *Client) GetVolume(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("GetVolumeSoapCall build error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", c.controlURL, bytes.NewReader(xmlbuilder))
+	req, err := http.NewRequestWithContext(ctx, "POST", c.controlURL, xmlbuilder)
 	if err != nil {
 		return 0, fmt.Errorf("GetVolumeSoapCall POST error: %w", err)
 	}
@@ -100,7 +99,7 @@ func (c *Client) SetMute(ctx context.Context, muted bool) error {
 		return fmt.Errorf("SetMuteSoapCall build error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", c.controlURL, bytes.NewReader(xmlbuilder))
+	req, err := http.NewRequestWithContext(ctx, "POST", c.controlURL, xmlbuilder)
 	if err != nil {
 		return fmt.Errorf("SetMuteSoapCall POST error: %w", err)
 	}
@@ -128,7 +127,7 @@ func (c *Client) SetVolume(ctx context.Context, vol int) error {
 		return fmt.Errorf("SetVolumeSoapCall build error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", c.controlURL, bytes.NewReader(xmlbuilder))
+	req, err := http.NewRequestWithContext(ctx, "POST", c.controlURL, xmlbuilder)
 	if err != nil {
 		return fmt.Errorf("SetVolumeSoapCall POST error: %w", err)
 	}

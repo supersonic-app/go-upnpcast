@@ -1,7 +1,6 @@
 package avtransport
 
 import (
-	"bytes"
 	"cmp"
 	"context"
 	"encoding/json"
@@ -72,7 +71,7 @@ func (a *Client) Seek(ctx context.Context, relSecs int) error {
 		return fmt.Errorf("SeekSoapCall action error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xml))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, xml)
 	if err != nil {
 		return fmt.Errorf("SeekSoapCall POST error: %w", err)
 	}
@@ -103,7 +102,7 @@ func (a *Client) SetAVTransportMedia(ctx context.Context, media *MediaItem) erro
 	if err != nil {
 		return fmt.Errorf("SetAVTransportMedia build error: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(soapCall))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, soapCall)
 	if err != nil {
 		return fmt.Errorf("SetAVTransportMedia POST error: %w", err)
 	}
@@ -127,7 +126,7 @@ func (a *Client) SetNextAVTransportMedia(ctx context.Context, media *MediaItem) 
 	if err != nil {
 		return fmt.Errorf("SetNextAVTransportMedia build error: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(soapCall))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, soapCall)
 	if err != nil {
 		return fmt.Errorf("SetNextAVTransportMedia POST error: %w", err)
 	}
@@ -154,7 +153,7 @@ func (a *Client) GetTransportInfo(ctx context.Context) (TransportInfo, error) {
 		return TransportInfo{}, fmt.Errorf("GetTransportInfo build error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xmlbuilder))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, xmlbuilder)
 	if err != nil {
 		return TransportInfo{}, fmt.Errorf("GetTransportInfo POST error: %w", err)
 	}
@@ -185,7 +184,7 @@ func (a *Client) GetPositionInfo(ctx context.Context) (PositionInfo, error) {
 		return PositionInfo{}, fmt.Errorf("GetPositionInfo build error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xmlRequest))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, xmlRequest)
 	if err != nil {
 		return PositionInfo{}, fmt.Errorf("GetPositionInfo POST error: %w", err)
 	}
@@ -209,22 +208,22 @@ func (a *Client) GetPositionInfo(ctx context.Context) (PositionInfo, error) {
 }
 
 func (a *Client) playPauseStopSoapCall(ctx context.Context, action string) error {
-	var xml []byte
+	var data io.Reader
 	var err error
 
 	switch action {
 	case "Play":
-		xml, err = playSoapBuild()
+		data, err = playSoapBuild()
 	case "Stop":
-		xml, err = stopSoapBuild()
+		data, err = stopSoapBuild()
 	case "Pause":
-		xml, err = pauseSoapBuild()
+		data, err = pauseSoapBuild()
 	}
 	if err != nil {
 		return fmt.Errorf("AVTransportActionSoapCall action error: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, bytes.NewReader(xml))
+	req, err := http.NewRequestWithContext(ctx, "POST", a.controlURL, data)
 	if err != nil {
 		return fmt.Errorf("AVTransportActionSoapCall POST error: %w", err)
 	}
