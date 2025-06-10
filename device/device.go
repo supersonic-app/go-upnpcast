@@ -1,10 +1,11 @@
 package device
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"slices"
 
 	"github.com/koron/go-ssdp"
 	"github.com/supersonic-app/go-upnpcast/services"
@@ -12,10 +13,7 @@ import (
 	"github.com/supersonic-app/go-upnpcast/services/renderingcontrol"
 )
 
-var (
-	ErrNoDeviceAvailable  = errors.New("no available Media Renderers")
-	ErrUnsupportedService = errors.New("the device does not support the requested service")
-)
+var ErrUnsupportedService = errors.New("the device does not support the requested service")
 
 // MediaRenderer represents a Digital Media Renderer (DMR) device discovered on the LAN
 type MediaRenderer struct {
@@ -45,21 +43,17 @@ func SearchMediaRenderers(ctx context.Context, waitSec int, requiredServices ...
 	}
 
 	devices := make([]*MediaRenderer, 0, len(deviceLocations))
+	errors := []error{}
 	for _, l := range deviceLocations {
 		mr, err := mediaRendererFromDeviceURL(ctx, l)
 		if err != nil {
-			// TODO: surface error to caller
-			log.Printf("skipping bad device: %v", err)
+			errors = append(errors, err)
 			continue
 		}
 		devices = append(devices, mr)
 	}
 
-	if len(devices) == 0 {
-		return nil, ErrNoDeviceAvailable
-	}
-
-	return devices, nil
+	return devices, cmp.Or(errors...)
 }
 
 // SupportsService returns true if the MediaRenderer supports the given service type
@@ -111,10 +105,8 @@ func getSSDPAVTransportDeviceLocations(waitSec int) ([]string, error) {
 type listSet []string
 
 func (l *listSet) add(s string) {
-	for _, x := range *l {
-		if s == x {
-			return
-		}
+	if slices.Contains(*l, s) {
+		return
 	}
 	*l = append(*l, s)
 }

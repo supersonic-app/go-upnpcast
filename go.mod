@@ -1,6 +1,6 @@
 module github.com/supersonic-app/go-upnpcast
 
-go 1.21.9
+go 1.22.0
 
 require (
 	github.com/h2non/filetype v1.1.3
