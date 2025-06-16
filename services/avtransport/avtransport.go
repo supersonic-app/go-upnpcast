@@ -14,8 +14,8 @@ import (
 )
 
 type Client struct {
-	http       http.Client
-	controlURL string
+	RequestHandler func(req *http.Request) (*http.Response, error)
+	controlURL     string
 }
 
 // MediaItem represents a media item to be rendered by the device.
@@ -47,8 +47,8 @@ type PositionInfo struct {
 // Should not be used directly. Use device.AVTransportClient() instead.
 func NewClient(controlURL, eventSubURL string) *Client {
 	return &Client{
-		http:       http.Client{Timeout: 10 * time.Second},
-		controlURL: controlURL,
+		RequestHandler: (&http.Client{Timeout: 10 * time.Second}).Do,
+		controlURL:     controlURL,
 	}
 }
 
@@ -77,7 +77,7 @@ func (a *Client) Seek(ctx context.Context, relSecs int) error {
 	}
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#Seek"`)
 
-	res, err := a.http.Do(req)
+	res, err := a.RequestHandler(req)
 	if err != nil {
 		return fmt.Errorf("SeekSoapCall Do POST error: %w", err)
 	}
@@ -107,7 +107,7 @@ func (a *Client) SetAVTransportMedia(ctx context.Context, media *MediaItem) erro
 		return fmt.Errorf("SetAVTransportMedia POST error: %w", err)
 	}
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#SetAVTransportURI"`)
-	res, err := a.http.Do(req)
+	res, err := a.RequestHandler(req)
 	if err != nil {
 		return fmt.Errorf("SetAVTransportMedia Do POST error: %w", err)
 	}
@@ -132,7 +132,7 @@ func (a *Client) SetNextAVTransportMedia(ctx context.Context, media *MediaItem) 
 	}
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#SetNextAVTransportURI"`)
-	res, err := a.http.Do(req)
+	res, err := a.RequestHandler(req)
 	if err != nil {
 		return fmt.Errorf("SetNextAVTransportMedia Do POST error: %w", err)
 	}
@@ -159,7 +159,7 @@ func (a *Client) GetTransportInfo(ctx context.Context) (TransportInfo, error) {
 	}
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#GetTransportInfo"`)
 
-	res, err := a.http.Do(req)
+	res, err := a.RequestHandler(req)
 	if err != nil {
 		return TransportInfo{}, fmt.Errorf("GetTransportInfo Do POST error: %w", err)
 	}
@@ -190,7 +190,7 @@ func (a *Client) GetPositionInfo(ctx context.Context) (PositionInfo, error) {
 	}
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#GetPositionInfo"`)
 
-	res, err := a.http.Do(req)
+	res, err := a.RequestHandler(req)
 	if err != nil {
 		return PositionInfo{}, fmt.Errorf("GetPositionInfo Do POST error: %w", err)
 	}
@@ -230,7 +230,7 @@ func (a *Client) playPauseStopSoapCall(ctx context.Context, action string) error
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:AVTransport:1#` + action + `"`)
 
-	res, err := a.http.Do(req)
+	res, err := a.RequestHandler(req)
 	if err != nil {
 		return fmt.Errorf("AVTransportActionSoapCall Do POST error: %w", err)
 	}
