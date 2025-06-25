@@ -14,15 +14,15 @@ import (
 
 // Client is a client to the device's RenderingControl service
 type Client struct {
-	RequestHandler func(req *http.Request) (*http.Response, error)
-	controlURL     string
+	Client     *http.Client
+	controlURL string
 }
 
 // Should not be used directly. Use device.RenderingControlClient() instead.
 func NewClient(controlURL string) *Client {
 	return &Client{
-		RequestHandler: (&http.Client{Timeout: 10 * time.Second}).Do,
-		controlURL:     controlURL,
+		Client:     &http.Client{Timeout: 10 * time.Second},
+		controlURL: controlURL,
 	}
 }
 
@@ -45,7 +45,7 @@ func (c *Client) GetMute(ctx context.Context) (string, error) {
 		"Connection":   []string{"close"},
 	}
 
-	res, err := c.RequestHandler(req)
+	res, err := c.Client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("GetMuteSoapCall Do POST error: %w", err)
 	}
@@ -73,7 +73,7 @@ func (c *Client) GetVolume(ctx context.Context) (int, error) {
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#GetVolume"`)
 
-	res, err := c.RequestHandler(req)
+	res, err := c.Client.Do(req)
 	if err != nil {
 		return 0, fmt.Errorf("GetVolumeSoapCall Do POST error: %w", err)
 	}
@@ -106,7 +106,7 @@ func (c *Client) SetMute(ctx context.Context, muted bool) error {
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#SetMute"`)
 
-	res, err := c.RequestHandler(req)
+	res, err := c.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("SetMuteSoapCall Do POST error: %w", err)
 	}
@@ -134,7 +134,7 @@ func (c *Client) SetVolume(ctx context.Context, vol int) error {
 
 	req.Header = utils.BuildRequestHeader(`"urn:schemas-upnp-org:service:RenderingControl:1#SetVolume"`)
 
-	res, err := c.RequestHandler(req)
+	res, err := c.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("SetVolumeSoapCall Do POST error: %w", err)
 	}
