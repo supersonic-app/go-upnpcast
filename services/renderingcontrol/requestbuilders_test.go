@@ -1,6 +1,10 @@
 package renderingcontrol
 
-import "testing"
+import (
+	"io"
+	"strings"
+	"testing"
+)
 
 func TestSetMuteSoapBuild(t *testing.T) {
 	tt := []struct {
@@ -26,7 +30,7 @@ func TestSetMuteSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call setMuteSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
@@ -50,7 +54,7 @@ func TestGetVolumeSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call setMuteSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
@@ -74,7 +78,7 @@ func TestGetMuteSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call getMuteSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
@@ -100,9 +104,15 @@ func TestSetVolumeSoapBuild(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s: Failed to call setVolumeSoapBuild due to %s", tc.name, err.Error())
 			}
-			if string(out) != tc.want {
+			if readerToString(out) != tc.want {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
 	}
+}
+
+func readerToString(r io.Reader) string {
+	var buf strings.Builder
+	io.Copy(&buf, r)
+	return buf.String()
 }

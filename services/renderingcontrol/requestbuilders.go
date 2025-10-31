@@ -2,7 +2,9 @@ package renderingcontrol
 
 import (
 	"encoding/xml"
-	"fmt"
+	"io"
+
+	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
 
 type setMuteEnvelope struct {
@@ -83,7 +85,7 @@ type setVolumeAction struct {
 	DesiredVolume    string
 }
 
-func setMuteSoapBuild(muted bool) ([]byte, error) {
+func setMuteSoapBuild(muted bool) (io.Reader, error) {
 	m := "0"
 	if muted {
 		m = "1"
@@ -104,16 +106,10 @@ func setMuteSoapBuild(muted bool) ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("setMuteSoapBuild Marshal error: %w", err)
-	}
-
-	return append(xmlStart, b...), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
-func getMuteSoapBuild() ([]byte, error) {
+func getMuteSoapBuild() (io.Reader, error) {
 	d := getMuteEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -128,16 +124,10 @@ func getMuteSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getMuteSoapBuild Marshal error: %w", err)
-	}
-
-	return append(xmlStart, b...), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
-func getVolumeSoapBuild() ([]byte, error) {
+func getVolumeSoapBuild() (io.Reader, error) {
 	d := getVolumeEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -152,16 +142,10 @@ func getVolumeSoapBuild() ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("getVolumeSoapBuild Marshal error: %w", err)
-	}
-
-	return append(xmlStart, b...), nil
+	return utils.MarshalXMLWithStart(d)
 }
 
-func setVolumeSoapBuild(v string) ([]byte, error) {
+func setVolumeSoapBuild(v string) (io.Reader, error) {
 	d := setVolumeEnvelope{
 		XMLName:  xml.Name{},
 		Schema:   "http://schemas.xmlsoap.org/soap/envelope/",
@@ -177,11 +161,5 @@ func setVolumeSoapBuild(v string) ([]byte, error) {
 			},
 		},
 	}
-	xmlStart := []byte(`<?xml version="1.0" encoding="utf-8"?>`)
-	b, err := xml.Marshal(d)
-	if err != nil {
-		return nil, fmt.Errorf("setVolumeSoapBuild Marshal error: %w", err)
-	}
-
-	return append(xmlStart, b...), nil
+	return utils.MarshalXMLWithStart(d)
 }
