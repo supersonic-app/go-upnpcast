@@ -12,23 +12,28 @@ import (
 	"github.com/supersonic-app/go-upnpcast/services"
 )
 
+type device struct {
+	DeviceType   string `xml:"deviceType"`
+	FriendlyName string `xml:"friendlyName"`
+	ModelName    string `xml:"modelName"`
+
+	ServiceList struct {
+		Services []struct {
+			Type        services.Type `xml:"serviceType"`
+			ID          string        `xml:"serviceId"`
+			ControlURL  string        `xml:"controlURL"`
+			EventSubURL string        `xml:"eventSubURL"`
+		} `xml:"service"`
+	} `xml:"serviceList"`
+
+	DeviceList struct {
+		Devices []device `xml:"device"`
+	} `xml:"deviceList"`
+}
+
 type dmrSchema struct {
 	XMLName xml.Name `xml:"root"`
-	Device  struct {
-		XMLName      xml.Name `xml:"device"`
-		FriendlyName string   `xml:"friendlyName"`
-		ModelName    string   `xml:"modelName"`
-		ServiceList  struct {
-			XMLName  xml.Name `xml:"serviceList"`
-			Services []struct {
-				XMLName     xml.Name      `xml:"service"`
-				Type        services.Type `xml:"serviceType"`
-				ID          string        `xml:"serviceId"`
-				ControlURL  string        `xml:"controlURL"`
-				EventSubURL string        `xml:"eventSubURL"`
-			} `xml:"service"`
-		} `xml:"serviceList"`
-	} `xml:"device"`
+	Device  device   `xml:"device"`
 }
 
 func mediaRendererFromDeviceURL(ctx context.Context, dmrurl string) (*MediaRenderer, error) {
@@ -56,14 +61,19 @@ func mediaRendererFromDeviceURL(ctx context.Context, dmrurl string) (*MediaRende
 		return nil, fmt.Errorf("unmarshal device manifest error: %w", err)
 	}
 
+	mrDevice := findMediaRenderer(root.Device)
+	if mrDevice == nil {
+		return nil, errors.New("no MediaRenderer device found")
+	}
+
 	mr := &MediaRenderer{
 		URL:          dmrurl,
-		FriendlyName: root.Device.FriendlyName,
-		ModelName:    root.Device.ModelName,
+		FriendlyName: mrDevice.FriendlyName,
+		ModelName:    mrDevice.ModelName,
 	}
-	for i := 0; i < len(root.Device.ServiceList.Services); i++ {
+	for i := 0; i < len(mrDevice.ServiceList.Services); i++ {
 		// normalize service URLs to start with leading /
-		service := root.Device.ServiceList.Services[i]
+		service := mrDevice.ServiceList.Services[i]
 		if !strings.HasPrefix(service.EventSubURL, "/") {
 			service.EventSubURL = "/" + service.EventSubURL
 		}
@@ -103,4 +113,19 @@ func mediaRendererFromDeviceURL(ctx context.Context, dmrurl string) (*MediaRende
 	}
 
 	return nil, errors.New("wrong DMR")
+}
+
+func findMediaRenderer(d device) *device {
+	// MediaRenderer can be either at root or nested
+	if d.DeviceType == "urn:schemas-upnp-org:device:MediaRenderer:1" {
+		return &d
+	}
+
+	for i := range d.DeviceList.Devices {
+		if mr := findMediaRenderer(d.DeviceList.Devices[i]); mr != nil {
+			return mr
+		}
+	}
+
+	return nil
 }
