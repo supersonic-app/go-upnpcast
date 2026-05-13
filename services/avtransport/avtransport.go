@@ -29,6 +29,20 @@ type MediaItem struct {
 	ContentType  string
 	Seekable     bool
 	Duration     time.Duration
+
+	// Audio / music metadata. Emitted into DIDL-Lite when non-zero.
+	// Renderers use these to populate their displays (cover art, artist,
+	// album, sample-rate / bit-depth readouts) and as hints about the
+	// underlying stream.
+	Artist          string
+	Album           string
+	AlbumArtURI     string
+	TrackNumber     int
+	Size            int64
+	Bitrate         int // bytes/sec, per DIDL-Lite res@bitrate
+	SampleFrequency int // Hz
+	BitsPerSample   int
+	NrAudioChannels int
 }
 
 // TransportInfo is the information returned by GetTransportInfo
