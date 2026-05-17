@@ -148,22 +148,32 @@ type didLLite struct {
 }
 
 type didLLiteItem struct {
-	SecCaptionInfo   *secCaptionInfo   `xml:"sec:CaptionInfo,omitempty"`
-	SecCaptionInfoEx *secCaptionInfoEx `xml:"sec:CaptionInfoEx,omitempty"`
-	XMLName          xml.Name          `xml:"item"`
-	DCtitle          string            `xml:"dc:title"`
-	UPNPClass        string            `xml:"upnp:class"`
-	ID               string            `xml:"id,attr"`
-	ParentID         string            `xml:"parentID,attr"`
-	Restricted       string            `xml:"restricted,attr"`
-	ResNode          []resNode         `xml:"res"`
+	SecCaptionInfo       *secCaptionInfo   `xml:"sec:CaptionInfo,omitempty"`
+	SecCaptionInfoEx     *secCaptionInfoEx `xml:"sec:CaptionInfoEx,omitempty"`
+	XMLName              xml.Name          `xml:"item"`
+	DCtitle              string            `xml:"dc:title"`
+	DCcreator            string            `xml:"dc:creator,omitempty"`
+	UPNPartist           string            `xml:"upnp:artist,omitempty"`
+	UPNPalbum            string            `xml:"upnp:album,omitempty"`
+	UPNPoriginalTrackNum int               `xml:"upnp:originalTrackNumber,omitempty"`
+	UPNPalbumArtURI      string            `xml:"upnp:albumArtURI,omitempty"`
+	UPNPClass            string            `xml:"upnp:class"`
+	ID                   string            `xml:"id,attr"`
+	ParentID             string            `xml:"parentID,attr"`
+	Restricted           string            `xml:"restricted,attr"`
+	ResNode              []resNode         `xml:"res"`
 }
 
 type resNode struct {
-	XMLName      xml.Name `xml:"res"`
-	Duration     string   `xml:"duration,attr,omitempty"`
-	ProtocolInfo string   `xml:"protocolInfo,attr"`
-	Value        string   `xml:",chardata"`
+	XMLName         xml.Name `xml:"res"`
+	Duration        string   `xml:"duration,attr,omitempty"`
+	Size            int64    `xml:"size,attr,omitempty"`
+	Bitrate         int      `xml:"bitrate,attr,omitempty"`
+	SampleFrequency int      `xml:"sampleFrequency,attr,omitempty"`
+	BitsPerSample   int      `xml:"bitsPerSample,attr,omitempty"`
+	NrAudioChannels int      `xml:"nrAudioChannels,attr,omitempty"`
+	ProtocolInfo    string   `xml:"protocolInfo,attr"`
+	Value           string   `xml:",chardata"`
 }
 
 type secCaptionInfo struct {
@@ -255,37 +265,45 @@ func buildURIMetadataPayload(media *MediaItem) ([]byte, error) {
 	}
 
 	var didl didLLiteItem
-	resNodeData := []resNode{}
-	//duration, _ := utils.DurationForMedia(media.URL)
 
-	if media.Duration == 0 {
-		resNodeData = append(resNodeData, resNode{
-			XMLName:      xml.Name{},
-			ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", media.ContentType, contentFeatures),
-			Value:        media.URL,
-		})
-	} else {
-		duration := utils.SecondsToClockTime(int(math.Round(media.Duration.Seconds())))
-		resNodeData = append(resNodeData, resNode{
-			XMLName:      xml.Name{},
-			Duration:     duration,
-			ProtocolInfo: fmt.Sprintf("http-get:*:%s:%s", media.ContentType, contentFeatures),
-			Value:        media.URL,
-		})
+	primary := resNode{
+		XMLName:         xml.Name{},
+		Size:            media.Size,
+		Bitrate:         media.Bitrate,
+		SampleFrequency: media.SampleFrequency,
+		BitsPerSample:   media.BitsPerSample,
+		NrAudioChannels: media.NrAudioChannels,
+		ProtocolInfo:    fmt.Sprintf("http-get:*:%s:%s", media.ContentType, contentFeatures),
+		Value:           media.URL,
 	}
+	if media.Duration > 0 {
+		primary.Duration = utils.SecondsToClockTime(int(math.Round(media.Duration.Seconds())))
+	}
+	resNodeData := []resNode{primary}
 
-	var title bytes.Buffer
-	if err := xml.EscapeText(&title, []byte(media.Title)); err != nil {
-		title.Reset()
+	// Pre-escape free-text fields so that the Samsung TV un-escape pass below
+	// leaves them XML-safe (xml.Marshal escapes them once, then the un-escape
+	// removes one layer, netting a single layer of escaping).
+	escape := func(s string) string {
+		var buf bytes.Buffer
+		if err := xml.EscapeText(&buf, []byte(s)); err != nil {
+			return ""
+		}
+		return buf.String()
 	}
 	didl = didLLiteItem{
-		XMLName:    xml.Name{},
-		ID:         "1",
-		ParentID:   "0",
-		Restricted: "1",
-		UPNPClass:  class,
-		DCtitle:    title.String(),
-		ResNode:    resNodeData,
+		XMLName:              xml.Name{},
+		ID:                   "1",
+		ParentID:             "0",
+		Restricted:           "1",
+		UPNPClass:            class,
+		DCtitle:              escape(media.Title),
+		DCcreator:            escape(media.Artist),
+		UPNPartist:           escape(media.Artist),
+		UPNPalbum:            escape(media.Album),
+		UPNPoriginalTrackNum: media.TrackNumber,
+		UPNPalbumArtURI:      escape(media.AlbumArtURI),
+		ResNode:              resNodeData,
 	}
 
 	if strings.Contains(media.SubtitlesURL, "srt") {
@@ -294,25 +312,16 @@ func buildURIMetadataPayload(media *MediaItem) ([]byte, error) {
 			ProtocolInfo: "http-get:*:text/srt:*",
 			Value:        media.SubtitlesURL,
 		})
-
-		didl = didLLiteItem{
-			XMLName:    xml.Name{},
-			ID:         "1",
-			ParentID:   "0",
-			Restricted: "1",
-			DCtitle:    media.Title,
-			UPNPClass:  class,
-			ResNode:    resNodeData,
-			SecCaptionInfo: &secCaptionInfo{
-				XMLName: xml.Name{},
-				Type:    "srt",
-				Value:   media.SubtitlesURL,
-			},
-			SecCaptionInfoEx: &secCaptionInfoEx{
-				XMLName: xml.Name{},
-				Type:    "srt",
-				Value:   media.SubtitlesURL,
-			},
+		didl.ResNode = resNodeData
+		didl.SecCaptionInfo = &secCaptionInfo{
+			XMLName: xml.Name{},
+			Type:    "srt",
+			Value:   media.SubtitlesURL,
+		}
+		didl.SecCaptionInfoEx = &secCaptionInfoEx{
+			XMLName: xml.Name{},
+			Type:    "srt",
+			Value:   media.SubtitlesURL,
 		}
 	}
 

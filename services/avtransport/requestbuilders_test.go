@@ -4,6 +4,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/supersonic-app/go-upnpcast/internal/utils"
 )
@@ -237,6 +238,66 @@ func TestSeekSoapBuild(t *testing.T) {
 				t.Fatalf("%s: got: %s, want: %s.", tc.name, out, tc.want)
 			}
 		})
+	}
+}
+
+func TestBuildURIMetadataPayload_MusicMetadata(t *testing.T) {
+	media := &MediaItem{
+		Title:           "Needed Time",
+		Artist:          "Some Artist",
+		Album:           "Some Album",
+		AlbumArtURI:     "http://192.0.2.10:56736/art",
+		TrackNumber:     7,
+		URL:             "http://192.0.2.10:56736/stream",
+		ContentType:     "audio/x-dsf",
+		Seekable:        true,
+		Duration:        313 * time.Second,
+		Size:            221457176,
+		Bitrate:         5645000,
+		SampleFrequency: 2822400,
+		BitsPerSample:   1,
+		NrAudioChannels: 2,
+	}
+
+	contentFeatures, err := utils.BuildContentFeatures(media.ContentType, "01", false)
+	if err != nil {
+		t.Fatalf("BuildContentFeatures: %v", err)
+	}
+
+	want := `<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:sec="http://www.sec.co.kr/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"><item id="1" parentID="0" restricted="1"><dc:title>Needed Time</dc:title><dc:creator>Some Artist</dc:creator><upnp:artist>Some Artist</upnp:artist><upnp:album>Some Album</upnp:album><upnp:originalTrackNumber>7</upnp:originalTrackNumber><upnp:albumArtURI>http://192.0.2.10:56736/art</upnp:albumArtURI><upnp:class>object.item.audioItem.musicTrack</upnp:class><res duration="00:05:13" size="221457176" bitrate="5645000" sampleFrequency="2822400" bitsPerSample="1" nrAudioChannels="2" protocolInfo="http-get:*:audio/x-dsf:` + contentFeatures + `">http://192.0.2.10:56736/stream</res></item></DIDL-Lite>`
+
+	got, err := buildURIMetadataPayload(media)
+	if err != nil {
+		t.Fatalf("buildURIMetadataPayload: %v", err)
+	}
+	if string(got) != want {
+		t.Fatalf("\ngot:  %s\nwant: %s", got, want)
+	}
+}
+
+func TestBuildURIMetadataPayload_AudioMinimal(t *testing.T) {
+	// When only the required fields are populated, no new metadata elements
+	// or <res> audio attributes should appear (omitempty path).
+	media := &MediaItem{
+		Title:       "Just A Title",
+		URL:         "http://192.0.2.10:56736/stream",
+		ContentType: "audio/flac",
+		Seekable:    true,
+	}
+
+	contentFeatures, err := utils.BuildContentFeatures(media.ContentType, "01", false)
+	if err != nil {
+		t.Fatalf("BuildContentFeatures: %v", err)
+	}
+
+	want := `<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:sec="http://www.sec.co.kr/" xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"><item id="1" parentID="0" restricted="1"><dc:title>Just A Title</dc:title><upnp:class>object.item.audioItem.musicTrack</upnp:class><res protocolInfo="http-get:*:audio/flac:` + contentFeatures + `">http://192.0.2.10:56736/stream</res></item></DIDL-Lite>`
+
+	got, err := buildURIMetadataPayload(media)
+	if err != nil {
+		t.Fatalf("buildURIMetadataPayload: %v", err)
+	}
+	if string(got) != want {
+		t.Fatalf("\ngot:  %s\nwant: %s", got, want)
 	}
 }
 
